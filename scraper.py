@@ -40,7 +40,7 @@ def dict_sorter(game_name, game_links, num, start, games_gone_through, coupons):
         if int(off) >= 66:
             if game not in coupons.keys():
                 game_price = price_scraper(link)
-#######################################################################################
+                #######################################################################################
                 if game_price < 1 and int(off) >= 66:   # You can change the price range and the discount here
                     coupons[game] = [int(off), game_price, link]
                     num += 1
@@ -93,6 +93,8 @@ def _main():
     steam_id = []
     print(f'Enter Steam id: ', end='')
     steam_ids = str(input())
+    if 'exit' in steam_ids:
+        exit()
     if ',' in steam_ids:
         steam_id = steam_ids.split(', ')
     else:
@@ -111,6 +113,6 @@ def _main():
 if __name__ == '__main__':
     _main()
 
-###############- EXAMPLE -############################
+###################- EXAMPLE -############################
 # 76561198305632439
 # 76561198305632439, 76561198018370992, 76561198044411569
