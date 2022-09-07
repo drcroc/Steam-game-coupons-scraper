@@ -21,10 +21,8 @@ headers = {
 def owned_games(ids):
     url = f'https://steamcommunity.com/profiles/' + ids + '/games/?tab=all'
     games = requests.get(url=url, headers=headers)
-    # games = json.dumps(games.json())
     games = games.content.decode('UTF-8')
     names = re.findall(game_name_owned, games)
-    # print(names)
     return names
 
 
@@ -60,7 +58,6 @@ def fetch_info(ids, game_filter, price):
                 fetch_info(ids, game_filter, price)
 
         print(f' Founded {len(names)} coupons. Time {time.time() - start:.5f}\n')
-        #     f'  №  |  Time  |  Games  |  OFF%  |  Links')
         dict_sorter(names, links, num, start, games_gone_through, coupons, game_filter, price)
 
         print(f'\r \nFounded : {len(names)} coupons from witch {len(coupons)} usable')
@@ -70,9 +67,6 @@ def fetch_info(ids, game_filter, price):
         for items, value in coupons.items():
             f.write(f'{items} - > {value} \n')
         f.close()
-        # end = time.time()
-        # total_time = end - start
-        # print("\n" + str(total_time))
     except NameError:
         print('timeout')
         fetch_info(ids, game_filter, price)
@@ -90,26 +84,25 @@ def dict_sorter(game_name, game_links, num, start, games_gone_through, coupons, 
         timer = f'{time.time() - start:.2f}'
         estimated_time_start = time.time()
 
-        if game not in game_filter and int(off) >= 66:
-            if game not in coupons.keys():
-                game_price = price_scraper(link)
+        if game not in coupons.keys() and game not in game_filter:
+            game_price = price_scraper(link, off)
 
-                if float(game_price) < float(price):
-                    coupons[game] = [int(off), game_price, link]
-                    num += 1
-                    print(f' {games_gone_through}   | {timer}   '
-                          f'| {num}   | {off}   | {link}')
+            if float(game_price) <= float(price):
+                coupons[game] = [int(off), game_price, link]
+                num += 1
+                print(f' {games_gone_through}   | {timer}   '
+                      f'| {num}   | {off}   | {link}')
 
-            elif game in coupons.keys():
-                if int(off) > int(coupons[game][0]):
-                    coupons[game][0] = int(off)
+        elif game in coupons.keys():
+            if int(off) > int(coupons[game][0]):
+                coupons[game][0] = int(off)
 
         estimated_time += float(f'{time.time() - estimated_time_start}')
 
         estimated = (estimated_time / int(games_gone_through)) * (len(game_name) - int(games_gone_through))
 
         progress = 100 * (games_gone_through / len(game_name))
-        progress_bar = '{' + (int(progress // 2.5) * '#') + (int(40-progress // 2.5) * '-') + '}'
+        progress_bar = '{' + (int(progress // 2.5) * '#') + (int(40 - progress // 2.5) * '-') + '}'
 
         print(f'\r ETC: {estimated:.2f} sec'
               f' | Games : {len(game_name)}/{games_gone_through} | {progress_bar} {progress:.2f} % ',
@@ -118,18 +111,19 @@ def dict_sorter(game_name, game_links, num, start, games_gone_through, coupons, 
 
 
 # FORTH
-def price_scraper(urls):
+def price_scraper(urls, off):
     urls = urls + f'&category2=29'  # You can remove the [+ f'&category2=29'] filter to show games without trading cards
     price = requests.get(url=urls)
     price = price.content.decode('UTF-8')
     price_sale = re.findall(game_price_on_sale, price)
     price = re.findall(game_price_not_on_sale, price)
     price = price + price_sale
-    # print(price)
+
     if len(price) > 0:
         if ',' in price[0]:
             price = price[0].replace(',', '.')
             price = float(price)
+            price = price - price * (int(off) / 100)
         else:
             price = float(price[0])
         time.sleep(0.5)
@@ -148,24 +142,31 @@ def _main():
     steam_id = []
     print(f'Enter Steam id: ', end='')
     steam_ids = str(input())
-    print(f'Max price: ', end='')
-    max_price = float(input())
-
-    if '' == steam_ids:
-        print(f'Enter steam id')
-        _main()
 
     if 'exit' in steam_ids:
         exit()
+
+    if len(steam_ids) < 17:
+        print(f'\nEnter valid steam id!')
+        _main()
 
     if ',' in steam_ids:
         steam_id = steam_ids.split(', ')
     else:
         steam_id.append(steam_ids)
 
-    if '' == max_price:
-        print(f'Max price is set to 5')
-        max_price = 5
+    while True:
+        print(f'Max price: ', end='')
+        max_price = input()
+        if ',' in max_price:
+            max_price = max_price.replace(',', '.')
+        if any(symbols.isdigit or '.' for symbols in max_price):
+            max_price = float(max_price)
+            break
+        elif max_price == '':
+            print('\nEnter max price you are willing to pay!')
+        else:
+            print('\nEnter valid price!')
 
     for user_id in steam_id:
         print(f'\nFor user : {own_steam_id}\nScraping inventory for coupons from user : {user_id}')
