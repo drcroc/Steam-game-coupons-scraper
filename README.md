@@ -9,7 +9,7 @@ Recently I start buying cheap steam games so that I can get steam badge for owni
 But it was taking me way to long to check manually all the coupon bots.   
 So I have created this script to do the work for me. It still has some futures missing like:
 - #### Parallel price checking
-- #### Filtering out user ownd games 
+- #### Filtering out user owned games
 - #### Getting the whole inventory  
 - #### User GUI
 
